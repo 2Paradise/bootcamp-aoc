@@ -20,42 +20,25 @@ const parseInput = (input) => {
     return [arrPatterns, patternLen];
 }
 
-const treeCont = (acc, x) => (x === '#') ? acc + 1 : acc;
-
 const sol = (input) => ({ hPoint, vPoint }) => {
     const [arrPatterns, patternLen] = parseInput(input);
 
     let point = 0;
-    let accVPoint = vPoint;
 
-    console.log(arrPatterns
-        .reduce( ( acc, pattern) => {
-            if(accVPoint === vPoint) {
-                if(point >= patternLen) point = point - patternLen;
-                acc.push(pattern.substr(point, 1));
-                point = point + hPoint;
-                accVPoint = 1;
-            }
-            else {
-                accVPoint ++;
-            }
-            return acc;
-        }, []));
-    
-    return arrPatterns
-        .reduce( ( acc, pattern) => {
-            if(accVPoint === vPoint) {
-                if(point >= patternLen) point = point - patternLen;
-                acc.push(pattern.substr(point, 1));
-                point = point + hPoint;
-                accVPoint = 1;
-            }
-            else {
-                accVPoint ++;
-            }
-            return acc;
-        }, [])
-        .reduce(treeCont);
+    const extraction = (treeCnt, pattern) => {
+        
+        if(point >= patternLen) point = point - patternLen;
+
+        if(pattern.substr(point, 1) === '#') treeCnt ++;
+
+        point = point + hPoint;
+
+        return treeCnt;
+    }
+
+    return arrPatterns.reduce( (treeCnt , pattern, idx) => {
+        return idx % vPoint === 0 ? extraction(treeCnt, pattern) : treeCnt;
+    }, 0);
 }
 
 // * return: object 값에 불필요한 vCnt 를 삭제하면서 return : int 로 변경 후 해당 func 제거
@@ -70,6 +53,8 @@ const result2 = arrCase
   .reduce((acc, x) => acc * x);
 
 console.log('result2 :: ', result2);
+
+console.log('single:: result :: ', sol(input)({hPoint : 3, vPoint : 1}));
 
 
 // const result = arrCase.reduce((acc, cur) => {
