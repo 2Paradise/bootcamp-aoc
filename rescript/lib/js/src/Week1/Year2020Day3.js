@@ -2,46 +2,13 @@
 'use strict';
 
 var Fs = require("fs");
+var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Array = require("rescript/lib/js/belt_Array.js");
 var Caml_array = require("rescript/lib/js/caml_array.js");
 var Caml_int32 = require("rescript/lib/js/caml_int32.js");
+var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
 var input = Fs.readFileSync("input/Week1/jsTestInput.txt", "utf8");
-
-function parseInput(input) {
-  var arrPatterns = input.split("\n");
-  var patternLen = Caml_array.get(arrPatterns, 0).length;
-  return [
-          arrPatterns,
-          patternLen
-        ];
-}
-
-function sol(input, param) {
-  var vPoint = param.vPoint;
-  var hPoint = param.hPoint;
-  var match = parseInput(input);
-  var patternLen = match[1];
-  var pointRef = {
-    contents: 0
-  };
-  var checkTree = function (treeCnt, pattern, idx) {
-    if (Caml_int32.mod_(idx, vPoint) === 0) {
-      var treeRef = treeCnt;
-      if (pointRef.contents >= patternLen) {
-        pointRef.contents = pointRef.contents - patternLen | 0;
-      }
-      if (pattern.substr(pointRef.contents, 1) === "#") {
-        treeRef = treeRef + 1 | 0;
-      }
-      pointRef.contents = pointRef.contents + hPoint | 0;
-      return treeRef;
-    } else {
-      return treeCnt;
-    }
-  };
-  return Belt_Array.reduceWithIndex(match[0], 0, checkTree);
-}
 
 var arrCase = [
   {
@@ -66,20 +33,54 @@ var arrCase = [
   }
 ];
 
+function parseInput(input) {
+  var arrPatterns = input.split("\n");
+  var patternLen = Caml_array.get(arrPatterns, 0).length;
+  return [
+          arrPatterns,
+          patternLen
+        ];
+}
+
+function sol(input, param) {
+  var vPoint = param.vPoint;
+  var hPoint = param.hPoint;
+  var match = parseInput(input);
+  var patternLen = match[1];
+  var extraction = function (param, pattern) {
+    var point = param.point;
+    var addTreeCnt = Belt_Option.getExn(Belt_Int.fromString(pattern.charAt(Caml_int32.mod_(point, patternLen))));
+    var newTreeCnt = param.treeCnt + addTreeCnt | 0;
+    var newPoint = point + hPoint | 0;
+    return {
+            point: newPoint,
+            treeCnt: newTreeCnt
+          };
+  };
+  return Belt_Array.reduce(Belt_Array.map(Belt_Array.keepWithIndex(match[0], (function (param, idx) {
+                        return Caml_int32.mod_(idx, vPoint) === 0;
+                      })), (function (x) {
+                    return x.replace(/[.]/g, "0").replace(/[#]/g, "1");
+                  })), {
+              point: 0,
+              treeCnt: 0
+            }, extraction);
+}
+
 function sol2(param) {
   return sol(input, param);
 }
 
 var result = Belt_Array.reduce(Belt_Array.map(arrCase, sol2), 1, (function (acc, x) {
-        return Math.imul(acc, x);
+        return Math.imul(acc, x.treeCnt);
       }));
 
 console.log(result);
 
 exports.input = input;
+exports.arrCase = arrCase;
 exports.parseInput = parseInput;
 exports.sol = sol;
-exports.arrCase = arrCase;
 exports.sol2 = sol2;
 exports.result = result;
 /* input Not a pure module */
