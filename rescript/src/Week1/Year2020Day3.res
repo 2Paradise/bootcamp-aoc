@@ -1,7 +1,7 @@
 
 // let input = Lazy({Node.Fs.readFileAsUtf8Sync("input/Week1/Year2020Day3.sample.txt")})
 // let input = Node.Fs.readFileAsUtf8Sync("input/Week1/Year2020Day3.sample.txt")
-let input = Node.Fs.readFileAsUtf8Sync("input/Week1/jsTestInput.txt")
+let input = Node.Fs.readFileAsUtf8Sync("input/Week1/Day3Input.txt")
 
 type testCase = {
     hPoint : int
@@ -39,7 +39,7 @@ let sol = (input, { hPoint, vPoint }) => {
             -> Js.String2.charAt(mod(point, patternLen)) 
             -> Belt.Int.fromString 
             -> Belt.Option.getExn
-            
+
         let newTreeCnt = treeCnt + addTreeCnt
         let newPoint = point + hPoint
 

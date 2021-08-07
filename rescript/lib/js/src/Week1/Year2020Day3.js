@@ -8,7 +8,7 @@ var Caml_array = require("rescript/lib/js/caml_array.js");
 var Caml_int32 = require("rescript/lib/js/caml_int32.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
-var input = Fs.readFileSync("input/Week1/jsTestInput.txt", "utf8");
+var input = Fs.readFileSync("input/Week1/Day3Input.txt", "utf8");
 
 var arrCase = [
   {
