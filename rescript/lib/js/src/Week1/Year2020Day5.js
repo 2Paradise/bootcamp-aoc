@@ -4,6 +4,7 @@
 var Fs = require("fs");
 var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Array = require("rescript/lib/js/belt_Array.js");
+var Caml_array = require("rescript/lib/js/caml_array.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
 var input = Fs.readFileSync("input/Week1/Day5Input.txt", "utf8");
@@ -95,31 +96,35 @@ function geId(param) {
   return (param[0] << 3) + param[1] | 0;
 }
 
-var resultPart1 = Belt_Array.reduce(Belt_Array.map(arrInput, splitPart), 0, (function (acc, x) {
-        var result = geId(getSeatNumber(x));
-        if (acc > result) {
+var arrSeatId = Belt_Array.map(Belt_Array.map(Belt_Array.map(arrInput, splitPart), getSeatNumber), geId);
+
+var resultPart1 = Belt_Array.reduce(arrSeatId, 0, (function (acc, x) {
+        if (acc > x) {
           return acc;
         } else {
-          return result;
+          return x;
         }
       }));
 
-var resultPart2 = Belt_Array.reduce(Belt_Array.map(arrInput, splitPart), [], (function (acc, x) {
-          return acc.concat([getSeatNumber(x)]);
-        })).filter(function (param) {
-      var row = param[0];
-      if (row !== 0) {
-        return true;
-      } else {
-        return row !== 127;
-      }
+var arrCheckId = arrSeatId.sort(function (a, b) {
+      return a - b | 0;
     });
+
+var resultPart2 = Belt_Array.keepWithIndex(arrCheckId, (function (x, idx) {
+        if (idx === (arrCheckId.length - 1 | 0)) {
+          return false;
+        }
+        var nextInt = Caml_array.get(arrCheckId, idx + 1 | 0);
+        return (nextInt - x | 0) > 1;
+      }));
 
 console.log("result : part 1");
 
 console.log(resultPart1);
 
 console.log("result : part 2");
+
+console.log(Caml_array.get(resultPart2, 0) + 1 | 0);
 
 exports.input = input;
 exports.arrInput = arrInput;
@@ -131,6 +136,8 @@ exports.calcSeatNum = calcSeatNum;
 exports.getSeat = getSeat;
 exports.getSeatNumber = getSeatNumber;
 exports.geId = geId;
+exports.arrSeatId = arrSeatId;
 exports.resultPart1 = resultPart1;
+exports.arrCheckId = arrCheckId;
 exports.resultPart2 = resultPart2;
 /* input Not a pure module */

@@ -45,22 +45,32 @@ let getSeatNumber = ((row, col)) => (row -> getSeat, col -> getSeat)
 
 let geId = ((row, col)) => row * 8 + col
 
-let resultPart1 = arrInput -> Belt.Array.map(splitPart) -> Belt.Array.reduce(0, (acc, x) => {
-    let result = x -> getSeatNumber -> geId
-    acc > result ? acc : result
-})
-
-let resultPart2 = arrInput 
+let arrSeatId = arrInput 
 -> Belt.Array.map(splitPart) 
--> Belt.Array.reduce( [] : arrSeat , (acc, x) => Js.Array2.concat(acc, [x -> getSeatNumber]))
--> Js.Array2.filter(((row, _)) => row !== 0 || row !== 127 )
+-> Belt.Array.map(getSeatNumber)
+-> Belt.Array.map(geId)
 
+let resultPart1 = arrSeatId
+-> Belt.Array.reduce(0, (acc, x) => acc > x ? acc : x)
+
+let arrCheckId = arrSeatId
+-> Js.Array2.sortInPlaceWith((a, b) => a - b)
+
+let resultPart2 = arrCheckId -> Belt.Array.keepWithIndex((x, idx) => {
+    
+    idx === Js.Array.length(arrCheckId) - 1 ? false : {
+        switch Some(arrCheckId[idx+1]) {
+        | Some(nextInt) => {
+            nextInt - x > 1
+        }
+        | _ => false
+        }        
+    }
+
+})
 
 "result : part 1" -> Js.log
 resultPart1 -> Js.log
 
 "result : part 2" -> Js.log
-// resultPart2 -> Js.log
-
-
-// "000" -> Col -> getSeat -> Js.log
+(resultPart2[0] + 1) -> Js.log
