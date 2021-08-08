@@ -60,11 +60,9 @@ let resultPart2 = arrCheckId -> Belt.Array.keepWithIndex((x, idx) => {
     
     idx === Js.Array.length(arrCheckId) - 1 ? false : {
         switch Some(arrCheckId[idx+1]) {
-        | Some(nextInt) => {
-            nextInt - x > 1
-        }
+        | Some(nextInt) => nextInt - x > 1
         | _ => false
-        }        
+        }
     }
 
 })
