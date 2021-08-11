@@ -2,69 +2,38 @@
 'use strict';
 
 var Fs = require("fs");
-var Belt_List = require("rescript/lib/js/belt_List.js");
+var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Array = require("rescript/lib/js/belt_Array.js");
 
-var input = Fs.readFileSync("input/Week1/Day7Input.txt", "utf8");
+var input = Fs.readFileSync("input/Week1/Day7Input.sample.txt", "utf8");
 
 function removeStr(x) {
-  return x.replace(/bags|bag|\.|[0-9]/g, "").trim();
+  return x.replace(/bags|bag|[0-9]|\./g, "").trim();
 }
 
-var arrInput = input.split("\n").map(function (x) {
-      return Belt_List.fromArray(x.split("contain"));
-    });
+var arrInput = input.split("\n");
 
-function getContainBags(x) {
-  return Belt_List.getExn(x, 0).split(",").map(function (x) {
-              return removeStr(x).trim();
-            });
+function getList(key) {
+  return Belt_Array.getExn(Belt_Array.keep(arrInput, (function (x) {
+                      return x.indexOf(key) > -1;
+                    })), 0).split("contain");
 }
 
-function setBagContainInfo(_list, _accContainColor) {
-  while(true) {
-    var accContainColor = _accContainColor;
-    var list = _list;
-    var newList = list.filter((function(accContainColor){
-        return function (param) {
-          return !accContainColor.includes(param[0]);
-        }
-        }(accContainColor)));
-    var newAccContainColor = Belt_Array.reduce(newList, accContainColor, (function(accContainColor){
-        return function (acc, param) {
-          var isContain = Belt_Array.some(param[1], (function (x) {
-                  return accContainColor.includes(x);
-                }));
-          if (isContain) {
-            return Belt_Array.concat(acc, [param[0]]);
-          } else {
-            return acc;
-          }
-        }
-        }(accContainColor)));
-    if (accContainColor.length === newAccContainColor.length) {
-      return newAccContainColor.length - 1 | 0;
-    }
-    _accContainColor = newAccContainColor;
-    _list = newList;
-    continue ;
-  };
+function parseContain(x) {
+  var cnt = Belt_Int.fromString(x.trim());
+  if (cnt !== undefined) {
+    return {
+            name: removeStr(x).trim(),
+            cnt: cnt,
+            nodes: []
+          };
+  }
+  
 }
-
-console.log(setBagContainInfo(Belt_Array.reduce(arrInput, [], (function (acc, x) {
-                if (x) {
-                  return Belt_Array.concat(acc, [[
-                                removeStr(x.hd),
-                                getContainBags(x.tl)
-                              ]]);
-                } else {
-                  return acc;
-                }
-              })), ["shiny gold"]));
 
 exports.input = input;
 exports.removeStr = removeStr;
 exports.arrInput = arrInput;
-exports.getContainBags = getContainBags;
-exports.setBagContainInfo = setBagContainInfo;
+exports.getList = getList;
+exports.parseContain = parseContain;
 /* input Not a pure module */
