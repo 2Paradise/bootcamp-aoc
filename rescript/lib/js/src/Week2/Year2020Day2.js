@@ -5,42 +5,104 @@ var Fs = require("fs");
 var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Array = require("rescript/lib/js/belt_Array.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
+var Caml_option = require("rescript/lib/js/caml_option.js");
 
-var input = Fs.readFileSync("input/Week2/Day2Input.sample.txt", "utf8");
+var input = Fs.readFileSync("input/Week2/Day2Input.txt", "utf8");
 
-function getInt(arr, idx) {
+function getIntCus(arr, idx) {
   return Belt_Option.getExn(Belt_Int.fromString(Belt_Array.getExn(arr, idx)));
 }
 
 function parsePolicy(x) {
   var arr = x.split(":");
-  var policy = Belt_Array.getExn(arr, 0);
   var target = Belt_Array.getExn(arr, 1).trim();
-  var arrPolicy = policy.split(" ");
+  var arrPolicy = Belt_Array.getExn(arr, 0).split(" ");
   var arrNum = Belt_Array.getExn(arrPolicy, 0).split("-");
   var str = Belt_Array.getExn(arrPolicy, 1);
   return [[
-            getInt(arrNum, 0),
-            getInt(arrNum, 1),
+            getIntCus(arrNum, 0),
+            getIntCus(arrNum, 1),
             str,
             target
           ]];
 }
 
-function checkValid(x) {
-  return 1;
+function checkPart1(x) {
+  var str = x[2];
+  var count = Belt_Array.reduce(x[3].split(""), 0, (function (acc, x) {
+          if (x === str) {
+            return acc + 1 | 0;
+          } else {
+            return acc;
+          }
+        }));
+  return [
+          x[0],
+          x[1],
+          count
+        ];
 }
 
-console.log("part1 result :: ");
+function checkPart2(x) {
+  var arrTarget = x[3].split("");
+  return [
+          x[2],
+          Belt_Array.get(arrTarget, x[0] - 1 | 0),
+          Belt_Array.get(arrTarget, x[1] - 1 | 0)
+        ];
+}
 
-console.log(Belt_Array.reduce(Belt_Array.reduce(input.split("\n"), [], (function (acc, x) {
-                return Belt_Array.concat(acc, parsePolicy(x));
-              })), 0, (function (acc, x) {
-            return acc + 1 | 0;
+function checkPart2Valid(param) {
+  var maxOp = param[2];
+  var minOp = param[1];
+  var str = param[0];
+  if (minOp === undefined) {
+    return 0;
+  }
+  if (maxOp === undefined) {
+    return 0;
+  }
+  var max = Caml_option.valFromOption(maxOp);
+  var min = Caml_option.valFromOption(minOp);
+  if ((min === str || max === str) && !(min === str && max === str)) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+var data = Belt_Array.reduce(input.split("\n"), [], (function (acc, x) {
+        return Belt_Array.concat(acc, parsePolicy(x));
+      }));
+
+console.log("Day2 Part1 : ");
+
+console.log(Belt_Array.reduce(Belt_Array.map(data, checkPart1), 0, (function (acc, param) {
+            var cnt = param[2];
+            if (param[0] <= cnt && cnt <= param[1]) {
+              return acc + 1 | 0;
+            } else {
+              return acc;
+            }
           })));
 
+console.log("Day2 Part2 : ");
+
+console.log(Belt_Array.reduce(Belt_Array.map(data, checkPart2), 0, (function (acc, x) {
+            return acc + checkPart2Valid(x) | 0;
+          })));
+
+var resultPart1;
+
+var resultPart2;
+
 exports.input = input;
-exports.getInt = getInt;
+exports.getIntCus = getIntCus;
 exports.parsePolicy = parsePolicy;
-exports.checkValid = checkValid;
+exports.checkPart1 = checkPart1;
+exports.checkPart2 = checkPart2;
+exports.checkPart2Valid = checkPart2Valid;
+exports.data = data;
+exports.resultPart1 = resultPart1;
+exports.resultPart2 = resultPart2;
 /* input Not a pure module */
