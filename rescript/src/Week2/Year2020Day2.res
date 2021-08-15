@@ -27,7 +27,7 @@ let parsePolicy = x => {
 }
 
 // part1 같은 문자 포함 카운트 reduce 후 누적값 min max 비교 1,0 리턴
-let checkPart1 = x => {=
+let checkPart1 = x => {
   let (min, max, str, target) = x
   let count =
     target->Js.String2.split("")->Belt.Array.reduce(0, (acc, x) => x === str ? acc + 1 : acc)
