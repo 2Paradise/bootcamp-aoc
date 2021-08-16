@@ -42,16 +42,60 @@ function parseRecord(x) {
                             };
                   case "ecl" :
                       var value$1 = match[1];
+                      var eclType;
+                      switch (value$1) {
+                        case "amb" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "amb"
+                            };
+                            break;
+                        case "blu" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "blu"
+                            };
+                            break;
+                        case "brn" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "brn"
+                            };
+                            break;
+                        case "grn" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "grn"
+                            };
+                            break;
+                        case "gry" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "gry"
+                            };
+                            break;
+                        case "hzl" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "hzl"
+                            };
+                            break;
+                        case "oth" :
+                            eclType = {
+                              TAG: /* Ecl */6,
+                              _0: "oth"
+                            };
+                            break;
+                        default:
+                          eclType = /* None */0;
+                      }
                       return {
                               byr: acc.byr,
                               iyr: acc.iyr,
                               eyr: acc.eyr,
                               hgt: acc.hgt,
                               hcl: acc.hcl,
-                              ecl: {
-                                TAG: /* Ecl */6,
-                                _0: value$1
-                              },
+                              ecl: eclType,
                               pid: acc.pid
                             };
                   case "eyr" :
@@ -206,10 +250,10 @@ function checkHex(x) {
 }
 
 function checkEyeColor(x) {
-  if (x === "amb" || x === "blu" || x === "brn" || x === "gry" || x === "grn" || x === "hzl") {
+  if (x === "oth" || x === "hzl" || x === "gry" || x === "grn" || x === "brn" || x === "blu") {
     return true;
   } else {
-    return x === "oth";
+    return x === "amb";
   }
 }
 

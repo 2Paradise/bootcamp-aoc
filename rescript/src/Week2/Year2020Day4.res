@@ -10,6 +10,8 @@ let input = Node.Fs.readFileAsUtf8Sync("input/Week2/Day4Input.txt")
 1. passport 타입을 생각해봅시다. *문제와 동일하게* record로 선언하세요.
 */
 
+type eyeClolr = [#amb | #blu | #brn | #gry | #grn | #hzl | #oth]
+
 type valid =
   | Byr(string)
   | Iyr(string)
@@ -17,7 +19,7 @@ type valid =
   | HgtCm(string)
   | HgtIn(string)
   | Hcl(string)
-  | Ecl(string)
+  | Ecl(eyeClolr)
   | Pid(string)
   | None
 
@@ -60,7 +62,19 @@ let parseRecord = x => {
         {...acc, hgt: hgtType}
       }
     | ["hcl", value] => {...acc, hcl: Hcl(value)}
-    | ["ecl", value] => {...acc, ecl: Ecl(value)}
+    | ["ecl", value] => {
+        let eclType = switch value {
+        | "amb" => Ecl(#amb)
+        | "blu" => Ecl(#blu)
+        | "brn" => Ecl(#brn)
+        | "gry" => Ecl(#gry)
+        | "grn" => Ecl(#grn)
+        | "hzl" => Ecl(#hzl)
+        | "oth" => Ecl(#oth)
+        | _ => None
+        }
+        {...acc, ecl: eclType}
+      }
     | ["pid", value] => {...acc, pid: Pid(value)}
     | _ => acc
     }
@@ -131,18 +145,11 @@ let checkLength = (x, len) => x->Js.String2.length === len
 
 let checkHex = x => x |> Js.Re.test_(%re("/^[\#][0-9a-f]{6}$/"))
 
-let checkEyeColor = x => {
-  switch x === "amb" ||
-  x === "blu" ||
-  x === "brn" ||
-  x === "gry" ||
-  x === "grn" ||
-  x === "hzl" ||
-  x === "oth" {
-  | true => true
-  | false => false
+let checkEyeColor = x =>
+  switch x {
+  | #...eyeClolr => true
+  | _ => false
   }
-}
 
 let passportValid = x => {
   switch x {
