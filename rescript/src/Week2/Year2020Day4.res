@@ -46,6 +46,7 @@ let initPassport = {
 2. string 타입의 입력을 passport 타입으로 파싱하는 parsePassport 함수를 작성해보세요.
    (우선 parsePassport 타입의 타입 시그니처를 생각해보세요)
 */
+let sumInt = arr => arr->Belt.Array.reduce(0, (acc, x) => acc + x)
 
 let parseRecord = x => {
   x->Belt.Array.reduce(initPassport, (acc, x) => {
@@ -81,7 +82,7 @@ let parseRecord = x => {
   })
 }
 
-let parsePassport = (acc, x) => acc->Belt.Array.concat([x->parseRecord])
+let parsePassport = x => x->parseRecord
 
 /*
 3. 올바른 Passport를 세는 countPassport 함수를 만들어서 문제를 해결해봅시다.
@@ -128,13 +129,8 @@ part 1 result 233 !
 part1 count part2 count가 다르다. 키 cm, in 포함 문자가 유효하다하는데 
 cm || in 가 포함되어 있지 않은 정보가 있음 [hgt]
 */
-"Day 4 Part 1 ::"->Js.log
-let arrPassport =
-  arrInput->Belt.Array.map(splitPassPort)->Belt.Array.reduce(([]: array<passport>), parsePassport)
 
-arrPassport->countPassport->Js.log
-
-"Day 4 Part 2 ::"->Js.log
+let arrPassport = arrInput->Belt.Array.map(splitPassPort)->Belt.Array.map(parsePassport)
 
 let checkRangeType = (x, (a: int, b: int)) => {
   let value = x->Belt.Int.fromString->Belt.Option.getExn
@@ -165,25 +161,27 @@ let passportValid = x => {
   }
 }
 
-let validatePassports: array<passport> => int = x => {
-  x->Belt.Array.reduce(0, (acc, x) => {
-    let {byr, iyr, eyr, hgt, hcl, ecl, pid} = x
-    switch (
-      byr->passportValid,
-      iyr->passportValid,
-      eyr->passportValid,
-      hgt->passportValid,
-      hcl->passportValid,
-      ecl->passportValid,
-      pid->passportValid,
-    ) {
-    | (true, true, true, true, true, true, true) => acc + 1
-    | _ => acc
-    }
-  })
+let passportDiv = x => {
+  let {byr, iyr, eyr, hgt, hcl, ecl, pid} = x
+  switch (
+    byr->passportValid,
+    iyr->passportValid,
+    eyr->passportValid,
+    hgt->passportValid,
+    hcl->passportValid,
+    ecl->passportValid,
+    pid->passportValid,
+  ) {
+  | (true, true, true, true, true, true, true) => 1
+  | _ => 0
+  }
 }
 
-arrPassport->validatePassports->Js.log
+"Day 4 Part 1 ::"->Js.log
+arrPassport->countPassport->Js.log
+
+"Day 4 Part 2 ::"->Js.log
+arrPassport->Belt.Array.map(passportDiv)->sumInt->Js.log
 
 // part2
 /*

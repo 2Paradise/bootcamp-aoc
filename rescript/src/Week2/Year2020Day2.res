@@ -1,6 +1,8 @@
 // let input = Node.Fs.readFileAsUtf8Sync("input/Week2/Day2Input.sample.txt")
 let input = Node.Fs.readFileAsUtf8Sync("input/Week2/Day2Input.txt")
 
+let sum = arr => arr->Belt.Array.reduce(0, (acc, x) => acc + x)
+
 /*
 part1 
   포함되어야 할 개수의 최대 최소 이므로
@@ -12,25 +14,50 @@ part2
 
 type policy = (int, int, string, string)
 
+// map :: (a -> b) -> Option<a> -> Option<b>
+// flatMap :: (a -> Option<b>) -> Option<a> -> Option<b>
+
 // int 값 변환
-let getIntCus = (arr, idx) => arr->Belt.Array.getExn(idx)->Belt.Int.fromString->Belt.Option.getExn
+let getIntCus = (arr, idx) => arr->Belt.Array.get(idx)->Belt.Option.flatMap(Belt.Int.fromString)
 
 // policy 정보 및 target string 파싱
+// (option<int>, option<int>, string, string)
+// option<(int, int, string, string))
+
 let parsePolicy = x => {
   let arr = x->Js.String2.split(":")
-  let target = arr->Belt.Array.getExn(1)->Js.String2.trim
-  let arrPolicy = arr->Belt.Array.getExn(0)->Js.String2.split(" ")
-  let arrNum = arrPolicy->Belt.Array.getExn(0)->Js.String2.split("-")
-  let str = arrPolicy->Belt.Array.getExn(1)
 
-  [(arrNum->getIntCus(0), arrNum->getIntCus(1), str, target)]
+  let target = arr->Belt.Array.get(1)->Belt.Option.flatMap(x => Some(x->Js.String2.trim))
+
+  let arrPolicy = switch arr->Belt.Array.get(0) {
+  | Some(arr) => Some(arr->Js.String2.split(" "))
+  | _ => None
+  }
+
+  let (arrNum, str) = switch arrPolicy {
+  | Some(arr) => {
+      let arrNum = arr->Belt.Array.get(0)->Belt.Option.flatMap(x => Some(x->Js.String2.split("-")))
+      let str = arr->Belt.Array.get(1)
+      (arrNum, str)
+    }
+  | _ => (None, None)
+  }
+
+  switch arrNum {
+  | Some(arr) =>
+    switch (arr->getIntCus(0), arr->getIntCus(1), str, target) {
+    | (Some(i0), Some(i1), Some(str), Some(target)) => Some((i0, i1, str, target))
+    | _ => None
+    }
+  | _ => None
+  }
 }
 
 // part1 같은 문자 포함 카운트 reduce 후 누적값 min max 비교 1,0 리턴
 let checkPart1 = x => {
   let (min, max, str, target) = x
-  let count =
-    target->Js.String2.split("")->Belt.Array.reduce(0, (acc, x) => x === str ? acc + 1 : acc)
+  let count = target->Js.String2.split("")->Belt.Array.map(x => x === str ? 1 : 0)->sum
+
   (min, max, count)
 }
 
@@ -48,21 +75,22 @@ let checkPart2Valid = ((str, minOp, maxOp)) => {
   }
 }
 
-let data =
-  input
-  ->Js.String2.split("\n")
-  ->Belt.Array.reduce(([]: array<policy>), (acc, x) => acc->Belt.Array.concat(x->parsePolicy))
+let data = input->Js.String2.split("\n")->Belt.Array.map(parsePolicy)
 
 "Day2 Part1 : "->Js.log
 let resultPart1 =
   data
+  ->Belt.Array.keepMap(x => x)
   ->Belt.Array.map(checkPart1)
-  ->Belt.Array.reduce(0, (acc, (min, max, cnt)) => min <= cnt && cnt <= max ? acc + 1 : acc)
+  ->Belt.Array.map(((min, max, cnt)) => min <= cnt && cnt <= max ? 1 : 0)
+  ->sum
   ->Js.log
 
 "Day2 Part2 : "->Js.log
 let resultPart2 =
   data
+  ->Belt.Array.keepMap(x => x)
   ->Belt.Array.map(checkPart2)
-  ->Belt.Array.reduce(0, (acc, x) => acc + x->checkPart2Valid)
+  ->Belt.Array.map(x => x->checkPart2Valid)
+  ->sum
   ->Js.log

@@ -9,33 +9,66 @@ var Caml_option = require("rescript/lib/js/caml_option.js");
 
 var input = Fs.readFileSync("input/Week2/Day2Input.txt", "utf8");
 
+function sum(arr) {
+  return Belt_Array.reduce(arr, 0, (function (acc, x) {
+                return acc + x | 0;
+              }));
+}
+
 function getIntCus(arr, idx) {
-  return Belt_Option.getExn(Belt_Int.fromString(Belt_Array.getExn(arr, idx)));
+  return Belt_Option.flatMap(Belt_Array.get(arr, idx), Belt_Int.fromString);
 }
 
 function parsePolicy(x) {
   var arr = x.split(":");
-  var target = Belt_Array.getExn(arr, 1).trim();
-  var arrPolicy = Belt_Array.getExn(arr, 0).split(" ");
-  var arrNum = Belt_Array.getExn(arrPolicy, 0).split("-");
-  var str = Belt_Array.getExn(arrPolicy, 1);
-  return [[
-            getIntCus(arrNum, 0),
-            getIntCus(arrNum, 1),
-            str,
+  var target = Belt_Option.flatMap(Belt_Array.get(arr, 1), (function (x) {
+          return x.trim();
+        }));
+  var arr$1 = Belt_Array.get(arr, 0);
+  var arrPolicy = arr$1 !== undefined ? arr$1.split(" ") : undefined;
+  var match;
+  if (arrPolicy !== undefined) {
+    var arrNum = Belt_Option.flatMap(Belt_Array.get(arrPolicy, 0), (function (x) {
+            return x.split("-");
+          }));
+    var str = Belt_Array.get(arrPolicy, 1);
+    match = [
+      arrNum,
+      str
+    ];
+  } else {
+    match = [
+      undefined,
+      undefined
+    ];
+  }
+  var str$1 = match[1];
+  var arrNum$1 = match[0];
+  if (arrNum$1 === undefined) {
+    return ;
+  }
+  var match$1 = getIntCus(arrNum$1, 0);
+  var match$2 = getIntCus(arrNum$1, 1);
+  if (match$1 !== undefined && match$2 !== undefined && str$1 !== undefined && target !== undefined) {
+    return [
+            match$1,
+            match$2,
+            str$1,
             target
-          ]];
+          ];
+  }
+  
 }
 
 function checkPart1(x) {
   var str = x[2];
-  var count = Belt_Array.reduce(x[3].split(""), 0, (function (acc, x) {
-          if (x === str) {
-            return acc + 1 | 0;
-          } else {
-            return acc;
-          }
-        }));
+  var count = sum(Belt_Array.map(x[3].split(""), (function (x) {
+              if (x === str) {
+                return 1;
+              } else {
+                return 0;
+              }
+            })));
   return [
           x[0],
           x[1],
@@ -71,32 +104,33 @@ function checkPart2Valid(param) {
   }
 }
 
-var data = Belt_Array.reduce(input.split("\n"), [], (function (acc, x) {
-        return Belt_Array.concat(acc, parsePolicy(x));
-      }));
+var data = Belt_Array.map(input.split("\n"), parsePolicy);
 
 console.log("Day2 Part1 : ");
 
-console.log(Belt_Array.reduce(Belt_Array.map(data, checkPart1), 0, (function (acc, param) {
-            var cnt = param[2];
-            if (param[0] <= cnt && cnt <= param[1]) {
-              return acc + 1 | 0;
-            } else {
-              return acc;
-            }
-          })));
+console.log(sum(Belt_Array.map(Belt_Array.map(Belt_Array.keepMap(data, (function (x) {
+                        return x;
+                      })), checkPart1), (function (param) {
+                var cnt = param[2];
+                if (param[0] <= cnt && cnt <= param[1]) {
+                  return 1;
+                } else {
+                  return 0;
+                }
+              }))));
 
 console.log("Day2 Part2 : ");
 
-console.log(Belt_Array.reduce(Belt_Array.map(data, checkPart2), 0, (function (acc, x) {
-            return acc + checkPart2Valid(x) | 0;
-          })));
+console.log(sum(Belt_Array.map(Belt_Array.map(Belt_Array.keepMap(data, (function (x) {
+                        return x;
+                      })), checkPart2), checkPart2Valid)));
 
 var resultPart1;
 
 var resultPart2;
 
 exports.input = input;
+exports.sum = sum;
 exports.getIntCus = getIntCus;
 exports.parsePolicy = parsePolicy;
 exports.checkPart1 = checkPart1;

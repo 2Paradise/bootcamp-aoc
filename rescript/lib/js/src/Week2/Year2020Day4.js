@@ -18,6 +18,12 @@ var initPassport = {
   pid: /* None */0
 };
 
+function sumInt(arr) {
+  return Belt_Array.reduce(arr, 0, (function (acc, x) {
+                return acc + x | 0;
+              }));
+}
+
 function parseRecord(x) {
   return Belt_Array.reduce(x, initPassport, (function (acc, x) {
                 var match = x.split(":");
@@ -189,9 +195,7 @@ function parseRecord(x) {
               }));
 }
 
-function parsePassport(acc, x) {
-  return Belt_Array.concat(acc, [parseRecord(x)]);
-}
+var parsePassport = parseRecord;
 
 function isNotEmpty(x) {
   if (typeof x === "number") {
@@ -224,13 +228,7 @@ function splitPassPort(x) {
 
 var arrInput = input.split("\n\n");
 
-console.log("Day 4 Part 1 ::");
-
-var arrPassport = Belt_Array.reduce(Belt_Array.map(arrInput, splitPassPort), [], parsePassport);
-
-console.log(countPassport(arrPassport));
-
-console.log("Day 4 Part 2 ::");
+var arrPassport = Belt_Array.map(Belt_Array.map(arrInput, splitPassPort), parsePassport);
 
 function checkRangeType(x, param) {
   var value = Belt_Option.getExn(Belt_Int.fromString(x));
@@ -312,27 +310,32 @@ function passportValid(x) {
   }
 }
 
-function validatePassports(x) {
-  return Belt_Array.reduce(x, 0, (function (acc, x) {
-                var match = passportValid(x.byr);
-                var match$1 = passportValid(x.iyr);
-                var match$2 = passportValid(x.eyr);
-                var match$3 = passportValid(x.hgt);
-                var match$4 = passportValid(x.hcl);
-                var match$5 = passportValid(x.ecl);
-                var match$6 = passportValid(x.pid);
-                if (match && match$1 && match$2 && match$3 && match$4 && match$5 && match$6) {
-                  return acc + 1 | 0;
-                } else {
-                  return acc;
-                }
-              }));
+function passportDiv(x) {
+  var match = passportValid(x.byr);
+  var match$1 = passportValid(x.iyr);
+  var match$2 = passportValid(x.eyr);
+  var match$3 = passportValid(x.hgt);
+  var match$4 = passportValid(x.hcl);
+  var match$5 = passportValid(x.ecl);
+  var match$6 = passportValid(x.pid);
+  if (match && match$1 && match$2 && match$3 && match$4 && match$5 && match$6) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
-console.log(validatePassports(arrPassport));
+console.log("Day 4 Part 1 ::");
+
+console.log(countPassport(arrPassport));
+
+console.log("Day 4 Part 2 ::");
+
+console.log(sumInt(Belt_Array.map(arrPassport, passportDiv)));
 
 exports.input = input;
 exports.initPassport = initPassport;
+exports.sumInt = sumInt;
 exports.parseRecord = parseRecord;
 exports.parsePassport = parsePassport;
 exports.isNotEmpty = isNotEmpty;
@@ -345,5 +348,5 @@ exports.checkLength = checkLength;
 exports.checkHex = checkHex;
 exports.checkEyeColor = checkEyeColor;
 exports.passportValid = passportValid;
-exports.validatePassports = validatePassports;
+exports.passportDiv = passportDiv;
 /* input Not a pure module */
