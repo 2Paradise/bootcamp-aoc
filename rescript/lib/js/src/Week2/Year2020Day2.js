@@ -15,20 +15,25 @@ function sum(arr) {
               }));
 }
 
-function getIntCus(arr, idx) {
-  return Belt_Option.flatMap(Belt_Array.get(arr, idx), Belt_Int.fromString);
+function customFlatMapArrayStoT(arr, idx, func) {
+  return Belt_Option.flatMap(Belt_Array.get(arr, idx), func);
+}
+
+function customMapArrayStoT(arr, idx, func) {
+  return Belt_Option.map(Belt_Array.get(arr, idx), func);
 }
 
 function parsePolicy(x) {
   var arr = x.split(":");
-  var target = Belt_Option.flatMap(Belt_Array.get(arr, 1), (function (x) {
+  var target = customMapArrayStoT(arr, 1, (function (x) {
           return x.trim();
         }));
-  var arr$1 = Belt_Array.get(arr, 0);
-  var arrPolicy = arr$1 !== undefined ? arr$1.split(" ") : undefined;
+  var arrPolicy = customMapArrayStoT(arr, 0, (function (x) {
+          return x.split(" ");
+        }));
   var match;
   if (arrPolicy !== undefined) {
-    var arrNum = Belt_Option.flatMap(Belt_Array.get(arrPolicy, 0), (function (x) {
+    var arrNum = customMapArrayStoT(arrPolicy, 0, (function (x) {
             return x.split("-");
           }));
     var str = Belt_Array.get(arrPolicy, 1);
@@ -47,8 +52,8 @@ function parsePolicy(x) {
   if (arrNum$1 === undefined) {
     return ;
   }
-  var match$1 = getIntCus(arrNum$1, 0);
-  var match$2 = getIntCus(arrNum$1, 1);
+  var match$1 = customFlatMapArrayStoT(arrNum$1, 0, Belt_Int.fromString);
+  var match$2 = customFlatMapArrayStoT(arrNum$1, 1, Belt_Int.fromString);
   if (match$1 !== undefined && match$2 !== undefined && str$1 !== undefined && target !== undefined) {
     return [
             match$1,
@@ -131,7 +136,8 @@ var resultPart2;
 
 exports.input = input;
 exports.sum = sum;
-exports.getIntCus = getIntCus;
+exports.customFlatMapArrayStoT = customFlatMapArrayStoT;
+exports.customMapArrayStoT = customMapArrayStoT;
 exports.parsePolicy = parsePolicy;
 exports.checkPart1 = checkPart1;
 exports.checkPart2 = checkPart2;

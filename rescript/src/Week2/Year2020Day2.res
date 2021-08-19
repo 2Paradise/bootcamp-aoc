@@ -17,8 +17,8 @@ type policy = (int, int, string, string)
 // map :: (a -> b) -> Option<a> -> Option<b>
 // flatMap :: (a -> Option<b>) -> Option<a> -> Option<b>
 
-// int 값 변환
-let getIntCus = (arr, idx) => arr->Belt.Array.get(idx)->Belt.Option.flatMap(Belt.Int.fromString)
+let customFlatMapArrayStoT = (arr, idx, func) => arr->Belt.Array.get(idx)->Belt.Option.flatMap(func)
+let customMapArrayStoT = (arr, idx, func) => arr->Belt.Array.get(idx)->Belt.Option.map(func)
 
 // policy 정보 및 target string 파싱
 // (option<int>, option<int>, string, string)
@@ -27,16 +27,12 @@ let getIntCus = (arr, idx) => arr->Belt.Array.get(idx)->Belt.Option.flatMap(Belt
 let parsePolicy = x => {
   let arr = x->Js.String2.split(":")
 
-  let target = arr->Belt.Array.get(1)->Belt.Option.flatMap(x => Some(x->Js.String2.trim))
-
-  let arrPolicy = switch arr->Belt.Array.get(0) {
-  | Some(arr) => Some(arr->Js.String2.split(" "))
-  | _ => None
-  }
+  let target = arr->customMapArrayStoT(1, x => x->Js.String2.trim)
+  let arrPolicy = arr->customMapArrayStoT(0, x => x->Js.String2.split(" "))
 
   let (arrNum, str) = switch arrPolicy {
   | Some(arr) => {
-      let arrNum = arr->Belt.Array.get(0)->Belt.Option.flatMap(x => Some(x->Js.String2.split("-")))
+      let arrNum = arr->customMapArrayStoT(0, x => x->Js.String2.split("-"))
       let str = arr->Belt.Array.get(1)
       (arrNum, str)
     }
@@ -45,7 +41,12 @@ let parsePolicy = x => {
 
   switch arrNum {
   | Some(arr) =>
-    switch (arr->getIntCus(0), arr->getIntCus(1), str, target) {
+    switch (
+      arr->customFlatMapArrayStoT(0, Belt.Int.fromString),
+      arr->customFlatMapArrayStoT(1, Belt.Int.fromString),
+      str,
+      target,
+    ) {
     | (Some(i0), Some(i1), Some(str), Some(target)) => Some((i0, i1, str, target))
     | _ => None
     }
@@ -94,3 +95,12 @@ let resultPart2 =
   ->Belt.Array.map(x => x->checkPart2Valid)
   ->sum
   ->Js.log
+
+// Array<Option<int>> => Array<int>
+// Array<Option<int>> => Option<Array<int>>
+// Array<Array<int>> => Array<int>
+
+// Option<int> => int
+// Try<int> => int
+
+// Promise<int> => int
