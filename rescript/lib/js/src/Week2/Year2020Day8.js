@@ -5,6 +5,7 @@ var Fs = require("fs");
 var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Array = require("rescript/lib/js/belt_Array.js");
 var Caml_array = require("rescript/lib/js/caml_array.js");
+var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
 var input = Fs.readFileSync("input/Week2/Day8Input.txt", "utf8");
 
@@ -20,35 +21,20 @@ function parseInitRecord(x) {
     case "acc" :
         var v = match[1];
         return {
-                isRun: false,
-                operType: {
-                  TAG: /* Acc */0,
-                  _0: v
-                },
-                isLast: false,
-                isCorrupted: false
+                TAG: /* Acc */0,
+                _0: v
               };
     case "jmp" :
         var v$1 = match[1];
         return {
-                isRun: false,
-                operType: {
-                  TAG: /* Jmp */1,
-                  _0: v$1
-                },
-                isLast: false,
-                isCorrupted: false
+                TAG: /* Jmp */1,
+                _0: v$1
               };
     case "nop" :
         var v$2 = match[1];
         return {
-                isRun: false,
-                operType: {
-                  TAG: /* Nop */2,
-                  _0: v$2
-                },
-                isLast: false,
-                isCorrupted: false
+                TAG: /* Nop */2,
+                _0: v$2
               };
     default:
       return ;
@@ -64,90 +50,43 @@ function parseOperation(x) {
         ];
 }
 
-function runAcc(x, acc) {
+function runExcute(x, t) {
   var match = parseOperation(x);
   var match$1 = match[0];
   if (match$1 === undefined) {
-    return acc;
+    return t;
   }
   switch (match$1) {
     case "+" :
         var v = match[1];
         if (v !== undefined) {
-          return acc + v | 0;
+          return t + v | 0;
         } else {
-          return acc;
+          return t;
         }
     case "-" :
         var v$1 = match[1];
         if (v$1 !== undefined) {
-          return acc - v$1 | 0;
+          return t - v$1 | 0;
         } else {
-          return acc;
+          return t;
         }
     default:
-      return acc;
+      return t;
   }
 }
 
-function runJump(x, i) {
-  var match = parseOperation(x);
-  var match$1 = match[0];
-  if (match$1 === undefined) {
-    return i;
-  }
-  switch (match$1) {
-    case "+" :
-        var v = match[1];
-        if (v !== undefined) {
-          return i + v | 0;
-        } else {
-          return i;
-        }
-    case "-" :
-        var v$1 = match[1];
-        if (v$1 !== undefined) {
-          return i - v$1 | 0;
-        } else {
-          return i;
-        }
-    default:
-      return i;
-  }
-}
-
-function checkRun(x, idx) {
-  return Belt_Array.mapWithIndex(x, (function (i, x) {
-                if (idx === i) {
-                  return {
-                          isRun: true,
-                          operType: x.operType,
-                          isLast: x.isLast,
-                          isCorrupted: x.isCorrupted
-                        };
-                } else {
-                  return x;
-                }
-              }));
-}
-
-function getExcuteAccAndIndex(operType, acc, i) {
-  if (typeof operType === "number") {
-    return [
-            acc,
-            i + 1 | 0
-          ];
-  }
+function getExcuteResult(operType, acc, i) {
   switch (operType.TAG | 0) {
     case /* Acc */0 :
         return [
-                runAcc(operType._0, acc),
+                runExcute(operType._0, acc),
                 i + 1 | 0
               ];
     case /* Jmp */1 :
         return [
                 acc,
-                runJump(operType._0, i)
+                runExcute(operType._0, i)
               ];
     case /* Nop */2 :
         return [
@@ -158,18 +97,17 @@ function getExcuteAccAndIndex(operType, acc, i) {
   }
 }
 
-function runPart1Excute(_x, _param) {
+function runPart1Excute(x, _arrRunIndex, _param) {
   while(true) {
     var param = _param;
-    var x = _x;
+    var arrRunIndex = _arrRunIndex;
     var i = param[1];
     var acc = param[0];
-    var match = Caml_array.get(x, i);
-    if (match.isRun) {
+    if (arrRunIndex.includes(i)) {
       return acc;
     }
-    _param = getExcuteAccAndIndex(match.operType, acc, i);
-    _x = checkRun(x, i);
+    _param = getExcuteResult(Caml_array.get(x, i), acc, i);
+    _arrRunIndex = Belt_Array.concat(arrRunIndex, [i]);
     continue ;
   };
 }
@@ -178,66 +116,32 @@ var arrExcute = Belt_Array.keepMap(Belt_Array.map(arrInput, parseInitRecord), (f
         return x;
       }));
 
-var resultPart1 = runPart1Excute(arrExcute, [
-      0,
-      0
-    ]);
+console.log("Day 8 part1 result :: ");
+
+console.log(runPart1Excute(arrExcute, [], [
+          0,
+          0
+        ]));
 
 var lenExcute = arrExcute.length;
 
-console.log("Day 8 part1 result :: ");
-
-console.log(resultPart1);
-
-function checkLast(x) {
-  return Belt_Array.mapWithIndex(x, (function (i, x) {
-                if ((lenExcute - 1 | 0) === i) {
-                  return {
-                          isRun: x.isRun,
-                          operType: x.operType,
-                          isLast: true,
-                          isCorrupted: x.isCorrupted
-                        };
-                } else {
-                  return x;
-                }
-              }));
-}
-
-function checkCorrupted(x, idx) {
-  return Belt_Array.mapWithIndex(x, (function (i, x) {
-                if (idx === i) {
-                  return {
-                          isRun: x.isRun,
-                          operType: x.operType,
-                          isLast: x.isLast,
-                          isCorrupted: true
-                        };
-                } else {
-                  return x;
-                }
-              }));
-}
-
-var arrPart2Excute = checkLast(arrExcute);
-
 var arrCorruptedIndex = Belt_Array.keepMap(Belt_Array.mapWithIndex(arrExcute, (function (i, x) {
-            var match = x.operType;
-            if (typeof match === "number" || match.TAG !== /* Acc */0) {
-              return i;
+            switch (x.TAG | 0) {
+              case /* Acc */0 :
+                  return ;
+              case /* Jmp */1 :
+              case /* Nop */2 :
+                  return i;
+              
             }
-            
           })), (function (x) {
         return x;
       }));
 
-function changeOperType(x) {
-  if (typeof x === "number") {
-    return /* Not */0;
-  }
+function swap(x) {
   switch (x.TAG | 0) {
     case /* Acc */0 :
-        return /* Not */0;
+        return x;
     case /* Jmp */1 :
         return {
                 TAG: /* Nop */2,
@@ -252,80 +156,139 @@ function changeOperType(x) {
   }
 }
 
-function runPart2Excute(_x, _param) {
+function checkOper(x) {
+  switch (x.TAG | 0) {
+    case /* Acc */0 :
+        return false;
+    case /* Jmp */1 :
+    case /* Nop */2 :
+        return true;
+    
+  }
+}
+
+function runPart2Excute(x, _loopType, _accq, _param, _param$1) {
   while(true) {
     var param = _param;
-    var x = _x;
-    var i = param[1];
-    var acc = param[0];
-    var match = Caml_array.get(x, i);
-    var isLast = match.isLast;
-    var operType = match.operType;
-    var newOperType = match.isCorrupted ? changeOperType(operType) : operType;
-    if (match.isRun) {
-      return [
-              acc,
-              isLast
-            ];
-    }
+    var param$1 = _param$1;
+    var accq = _accq;
+    var loopType = _loopType;
+    var i = param$1[1];
+    var acc = param$1[0];
+    var arrB = param[1];
+    var arrA = param[0];
+    var isLast = (lenExcute - 1 | 0) === i;
+    var isIncluedes = Belt_Array.concat(arrA, arrB).includes(i);
+    var isSwap = checkOper(Caml_array.get(x, i));
     if (isLast) {
-      var match$1 = getExcuteAccAndIndex(newOperType, acc, i);
-      return [
-              match$1[0],
-              isLast
-            ];
+      return getExcuteResult(Caml_array.get(x, i), acc, i)[0];
     }
-    _param = getExcuteAccAndIndex(newOperType, acc, i);
-    _x = checkRun(x, i);
+    if (loopType) {
+      if (isIncluedes) {
+        var startIdx = Belt_Array.get(arrB, 0);
+        if (startIdx === undefined) {
+          return acc;
+        }
+        _param$1 = getExcuteResult(Caml_array.get(x, startIdx), accq, startIdx);
+        _param = [
+          Belt_Array.concat(arrA, [startIdx]),
+          []
+        ];
+        _loopType = /* Loop */0;
+        continue ;
+      }
+      _param$1 = getExcuteResult(Caml_array.get(x, i), acc, i);
+      _param = [
+        arrA,
+        Belt_Array.concat(arrB, [i])
+      ];
+      _loopType = /* TestLoop */1;
+      continue ;
+    }
+    if (isIncluedes) {
+      return acc;
+    }
+    if (isSwap) {
+      _param$1 = getExcuteResult(swap(Caml_array.get(x, i)), acc, i);
+      _param = [
+        arrA,
+        Belt_Array.concat(arrB, [i])
+      ];
+      _accq = acc;
+      _loopType = /* TestLoop */1;
+      continue ;
+    }
+    _param$1 = getExcuteResult(Caml_array.get(x, i), acc, i);
+    _param = [
+      Belt_Array.concat(arrA, [i]),
+      arrB
+    ];
+    _loopType = /* Loop */0;
     continue ;
   };
 }
 
-function runExcute(arrCorruptedIndex, arrPart2Excute) {
-  return Belt_Array.map(Belt_Array.map(arrCorruptedIndex, (function (x) {
-                    return checkCorrupted(arrPart2Excute, x);
-                  })), (function (x) {
-                return runPart2Excute(x, [
-                            0,
-                            0
-                          ]);
-              }));
-}
-
 console.log("Day 8 part2 result :: ");
 
-var resultPart2 = Belt_Array.get(Belt_Array.keep(runExcute(arrCorruptedIndex, arrPart2Excute), (function (param) {
-            return param[1];
-          })), 0);
+console.log(runPart2Excute(arrExcute, /* Loop */0, 0, [
+          [],
+          []
+        ], [
+          0,
+          0
+        ]));
 
-console.log(resultPart2);
+function runPart3Excute(x, _arrCorruptedIndex, _arrIndex, _param) {
+  while(true) {
+    var param = _param;
+    var arrIndex = _arrIndex;
+    var arrCorruptedIndex = _arrCorruptedIndex;
+    var i = param[1];
+    var acc = param[0];
+    var isIncluedes = arrIndex.includes(i);
+    var isLast = (lenExcute - 1 | 0) === i;
+    var corruptedIndex = Belt_Array.get(arrCorruptedIndex, arrCorruptedIndex.length - 1 | 0);
+    var oper = Belt_Option.isSome(corruptedIndex) && corruptedIndex === i ? swap(Caml_array.get(x, i)) : Caml_array.get(x, i);
+    if (isLast) {
+      console.log("Day 8 part2 - 1 result :: ");
+      return getExcuteResult(oper, acc, i)[0];
+    }
+    if (isIncluedes) {
+      _param = [
+        0,
+        0
+      ];
+      _arrIndex = [];
+      _arrCorruptedIndex = Belt_Array.keep(arrCorruptedIndex, (function(corruptedIndex){
+          return function (x) {
+            return x !== corruptedIndex;
+          }
+          }(corruptedIndex)));
+      continue ;
+    }
+    _param = getExcuteResult(oper, acc, i);
+    _arrIndex = Belt_Array.concat(arrIndex, [i]);
+    continue ;
+  };
+}
 
-var initOperation = {
-  isRun: false,
-  operType: /* Not */0,
-  isLast: false,
-  isCorrupted: false
-};
+console.log(runPart3Excute(arrExcute, arrCorruptedIndex, [], [
+          0,
+          0
+        ]));
 
 exports.input = input;
-exports.initOperation = initOperation;
 exports.arrInput = arrInput;
 exports.parseInitRecord = parseInitRecord;
 exports.parseOperation = parseOperation;
-exports.runAcc = runAcc;
-exports.runJump = runJump;
-exports.checkRun = checkRun;
-exports.getExcuteAccAndIndex = getExcuteAccAndIndex;
+exports.runExcute = runExcute;
+exports.getExcuteResult = getExcuteResult;
 exports.runPart1Excute = runPart1Excute;
 exports.arrExcute = arrExcute;
-exports.resultPart1 = resultPart1;
 exports.lenExcute = lenExcute;
-exports.checkLast = checkLast;
-exports.checkCorrupted = checkCorrupted;
-exports.arrPart2Excute = arrPart2Excute;
 exports.arrCorruptedIndex = arrCorruptedIndex;
-exports.changeOperType = changeOperType;
+exports.swap = swap;
+exports.checkOper = checkOper;
 exports.runPart2Excute = runPart2Excute;
-exports.runExcute = runExcute;
-exports.resultPart2 = resultPart2;
+exports.runPart3Excute = runPart3Excute;
 /* input Not a pure module */

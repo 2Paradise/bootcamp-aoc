@@ -2,136 +2,187 @@ let input = Node.Fs.readFileAsUtf8Sync("input/Week2/Day8Input.txt")
 // let input = Node.Fs.readFileAsUtf8Sync("input/Week2/Day8Input.sample.txt")
 
 // 실행된 정보, oper type, oper value // acc
-type oper = Acc(string) | Jmp(string) | Nop(string) | Not
+type oper = Acc(string) | Jmp(string) | Nop(string)
+type opers = array<oper>
 
-type operation = {
-  isRun: bool,
-  operType: oper,
-  isLast: bool,
-  isCorrupted: bool,
-}
+// let run = (acc, opers, index) => {
+//   let x = opers[index]
 
-let initOperation = {
-  isRun: false,
-  operType: Not,
-  isLast: false,
-  isCorrupted: false,
-}
+//   switch x {
+//   | Acc(i) => (acc + i, index)
+//   | Jmp(i) => (acc, index + i)
+//   | Nop => (acc, index + 1)
+//   }
+// }
 
+// run(0, opers, 0)
 let arrInput = input->Js.String2.split("\n")
 
 let parseInitRecord = x => {
   switch x->Js.String2.split(" ") {
-  | ["acc", v] => Some({...initOperation, operType: Acc(v)})
-  | ["jmp", v] => Some({...initOperation, operType: Jmp(v)})
-  | ["nop", v] => Some({...initOperation, operType: Nop(v)})
+  | ["acc", v] => Acc(v)->Some
+  | ["jmp", v] => Jmp(v)->Some
+  | ["nop", v] => Nop(v)->Some
   | _ => None
   }
 }
 
 let parseOperation = x => {
-  let accOperation = Some(x->Js.String2.replaceByRe(%re("/\d/g"), ""))
+  let accOperation = x->Js.String2.replaceByRe(%re("/\d/g"), "")->Some
   let accValue = x->Js.String2.replaceByRe(%re("/\D/g"), "")->Belt.Int.fromString
   (accOperation, accValue)
 }
 
-let runAcc = (x, acc) => {
+let runExcute = (x, t) => {
   switch x->parseOperation {
-  | (Some("+"), Some(v)) => acc + v
-  | (Some("-"), Some(v)) => acc - v
-  | _ => acc
+  | (Some("+"), Some(v)) => t + v
+  | (Some("-"), Some(v)) => t - v
+  | _ => t
   }
 }
 
-let runJump = (x, i) => {
-  switch x->parseOperation {
-  | (Some("+"), Some(v)) => i + v
-  | (Some("-"), Some(v)) => i - v
-  | _ => i
-  }
-}
-
-let checkRun = (x, idx) => x->Belt.Array.mapWithIndex((i, x) => idx === i ? {...x, isRun: true} : x)
-
-let getExcuteAccAndIndex = (operType, acc, i) => {
+let getExcuteResult = (operType, acc, i) => {
   switch operType {
-  | Acc(v) => (v->runAcc(acc), i + 1)
-  | Jmp(v) => (acc, v->runJump(i))
+  | Acc(v) => (v->runExcute(acc), i + 1)
+  | Jmp(v) => (acc, v->runExcute(i))
   | Nop(_) => (acc, i + 1)
-  | _ => (acc, i + 1)
   }
 }
 
-let rec runPart1Excute = (x, (acc, i)) => {
-  let {isRun, operType} = x[i]
-  switch isRun {
-  | false => x->checkRun(i)->runPart1Excute(getExcuteAccAndIndex(operType, acc, i))
-  | true => acc
+let rec runPart1Excute = (x, arrRunIndex, (acc, i)) => {
+  if !(arrRunIndex->Js.Array2.includes(i)) {
+    x->runPart1Excute(arrRunIndex->Belt.Array.concat([i]), getExcuteResult(x[i], acc, i))
+  } else {
+    acc
   }
 }
 
 let arrExcute = arrInput->Belt.Array.map(parseInitRecord)->Belt.Array.keepMap(x => x)
 
-let resultPart1 = arrExcute->runPart1Excute((0, 0))
+"Day 8 part1 result :: "->Js.log
+arrExcute->runPart1Excute([], (0, 0))->Js.log
 
 let lenExcute = arrExcute->Belt.Array.length
-
-"Day 8 part1 result :: "->Js.log
-resultPart1->Js.log
-
-let checkLast = x =>
-  x->Belt.Array.mapWithIndex((i, x) => lenExcute - 1 === i ? {...x, isLast: true} : x)
-
-let checkCorrupted = (x, idx) =>
-  x->Belt.Array.mapWithIndex((i, x) => idx === i ? {...x, isCorrupted: true} : x)
-
-let arrPart2Excute = arrExcute->checkLast
 
 let arrCorruptedIndex =
   arrExcute
   ->Belt.Array.mapWithIndex((i, x): option<int> => {
-    switch x.operType {
+    switch x {
     | Acc(_) => None
     | _ => Some(i)
     }
   })
   ->Belt.Array.keepMap(x => x)
 
-let changeOperType = x =>
+let swap = x =>
   switch x {
   | Jmp(v) => Nop(v)
   | Nop(v) => Jmp(v)
-  | _ => Not
+  | _ => x
   }
 
-let rec runPart2Excute = (x, (acc, i)) => {
-  let {isRun, operType, isCorrupted, isLast} = x[i]
+let checkOper = x =>
+  switch x {
+  | Acc(_) => false
+  | _ => true
+  }
 
-  let newOperType = isCorrupted ? operType->changeOperType : operType
+type loop = Loop | TestLoop
 
-  switch isRun {
-  | false =>
-    if isLast {
-      let (acc, _) = getExcuteAccAndIndex(newOperType, acc, i)
-      (acc, isLast)
-    } else {
-      x->checkRun(i)->runPart2Excute(getExcuteAccAndIndex(newOperType, acc, i))
+let rec runPart2Excute = (x, loopType, accq, (arrA, arrB), (acc, i)) => {
+  let isLast = lenExcute - 1 === i
+  let isIncluedes = arrA->Belt.Array.concat(arrB)->Js.Array2.includes(i)
+  let isSwap = x[i]->checkOper
+
+  if isLast {
+    let (acc, _) = getExcuteResult(x[i], acc, i)
+    acc
+  } else {
+    switch loopType {
+    | Loop =>
+      switch isIncluedes {
+      | false =>
+        switch isSwap {
+        | true =>
+          x->runPart2Excute(
+            TestLoop,
+            acc,
+            (arrA, arrB->Belt.Array.concat([i])),
+            getExcuteResult(x[i]->swap, acc, i),
+          )
+        | false =>
+          x->runPart2Excute(
+            Loop,
+            accq,
+            (arrA->Belt.Array.concat([i]), arrB),
+            getExcuteResult(x[i], acc, i),
+          )
+        }
+      | true => acc
+      }
+    | TestLoop =>
+      switch isIncluedes {
+      | true => {
+          let startIdx = arrB->Belt.Array.get(0)
+          switch startIdx {
+          | Some(si) =>
+            x->runPart2Excute(
+              Loop,
+              accq,
+              (arrA->Belt.Array.concat([si]), []),
+              getExcuteResult(x[si], accq, si),
+            )
+          | None => acc
+          }
+        }
+      | false =>
+        x->runPart2Excute(
+          TestLoop,
+          accq,
+          (arrA, arrB->Belt.Array.concat([i])),
+          getExcuteResult(x[i], acc, i),
+        )
+      }
     }
-  | true => (acc, isLast)
   }
 }
 
-let runExcute = (arrCorruptedIndex, arrPart2Excute) => {
-  arrCorruptedIndex
-  ->Belt.Array.map(x => arrPart2Excute->checkCorrupted(x))
-  ->Belt.Array.map(x => x->runPart2Excute((0, 0)))
-}
+// 20
+// [] -> [0] -> [0, 1] -> [0, 1, 10] -> [0 ,1, 10, 15] -> [0, 1, 10, 15, 3] -> ([0 ,1, 10, 15], 3) -> ([0 ,1, 10], 15)
+/*
+  ([],[]) -> 
+*/
 
 "Day 8 part2 result :: "->Js.log
-let resultPart2 =
-  arrCorruptedIndex
-  ->runExcute(arrPart2Excute)
-  ->Belt.Array.keep(((_, isLast)) => isLast)
-  ->Belt.Array.get(0)
+arrExcute->runPart2Excute(Loop, 0, ([], []), (0, 0))->Js.log
 
-resultPart2->Js.log
+let rec runPart3Excute = (x, arrCorruptedIndex, arrIndex, (acc, i)) => {
+  let isIncluedes = arrIndex->Js.Array2.includes(i)
+  let isLast = lenExcute - 1 === i
+  let corruptedIndex = arrCorruptedIndex->Belt.Array.get(Belt.Array.length(arrCorruptedIndex) - 1)
+
+  let oper = switch corruptedIndex->Belt.Option.isSome && corruptedIndex === i->Some {
+  | true => x[i]->swap
+  | false => x[i]
+  }
+
+  if isLast {
+    "Day 8 part2 - 1 result :: "->Js.log
+    let (acc, _) = getExcuteResult(oper, acc, i)
+    acc
+  } else if !isIncluedes {
+    x->runPart3Excute(
+      arrCorruptedIndex,
+      arrIndex->Belt.Array.concat([i]),
+      getExcuteResult(oper, acc, i),
+    )
+  } else {
+    x->runPart3Excute(
+      arrCorruptedIndex->Belt.Array.keep(x => x->Some !== corruptedIndex),
+      [],
+      (0, 0),
+    )
+  }
+}
+
+arrExcute->runPart3Excute(arrCorruptedIndex, [], (0, 0))->Js.log
