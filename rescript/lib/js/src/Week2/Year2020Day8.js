@@ -245,15 +245,21 @@ function runPart3Excute(x, _arrCorruptedIndex, _arrIndex, _param) {
     var arrCorruptedIndex = _arrCorruptedIndex;
     var i = param[1];
     var acc = param[0];
-    var isIncluedes = arrIndex.includes(i);
-    var isLast = (lenExcute - 1 | 0) === i;
     var corruptedIndex = Belt_Array.get(arrCorruptedIndex, arrCorruptedIndex.length - 1 | 0);
-    var oper = Belt_Option.isSome(corruptedIndex) && corruptedIndex === i ? swap(Caml_array.get(x, i)) : Caml_array.get(x, i);
-    if (isLast) {
+    var oper = Belt_Option.mapWithDefault(corruptedIndex, Caml_array.get(x, i), (function(i){
+        return function (ci) {
+          if (ci === i) {
+            return swap(Caml_array.get(x, i));
+          } else {
+            return Caml_array.get(x, i);
+          }
+        }
+        }(i)));
+    if ((lenExcute - 1 | 0) === i) {
       console.log("Day 8 part2 - 1 result :: ");
       return getExcuteResult(oper, acc, i)[0];
     }
-    if (isIncluedes) {
+    if (arrIndex.includes(i)) {
       _param = [
         0,
         0

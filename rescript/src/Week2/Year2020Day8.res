@@ -153,24 +153,35 @@ let rec runPart2Excute = (x, loopType, accq, (arrA, arrB), (acc, i)) => {
   ([],[]) -> 
 */
 
+/*
+instructions :: array<oper> [Acc(3), Jmp(2), Nop, Nop, Acc(2), Jmp(-3)]
+executions :: list<(int, int)> -> instructions index
+[(0, 0), (3, 1), (3, 3)]
+
+(prevState, action) -> nextState
+
+run(Nop, (executions)) -> (executions ++ [run index])
+
+*/
+
 "Day 8 part2 result :: "->Js.log
 arrExcute->runPart2Excute(Loop, 0, ([], []), (0, 0))->Js.log
 
 let rec runPart3Excute = (x, arrCorruptedIndex, arrIndex, (acc, i)) => {
-  let isIncluedes = arrIndex->Js.Array2.includes(i)
-  let isLast = lenExcute - 1 === i
   let corruptedIndex = arrCorruptedIndex->Belt.Array.get(Belt.Array.length(arrCorruptedIndex) - 1)
-
+  /*
   let oper = switch corruptedIndex->Belt.Option.isSome && corruptedIndex === i->Some {
   | true => x[i]->swap
   | false => x[i]
   }
+ */
+  let oper = corruptedIndex->Belt.Option.mapWithDefault(x[i], ci => ci == i ? x[i]->swap : x[i])
 
-  if isLast {
+  if lenExcute - 1 === i {
     "Day 8 part2 - 1 result :: "->Js.log
     let (acc, _) = getExcuteResult(oper, acc, i)
     acc
-  } else if !isIncluedes {
+  } else if !(arrIndex->Js.Array2.includes(i)) {
     x->runPart3Excute(
       arrCorruptedIndex,
       arrIndex->Belt.Array.concat([i]),
